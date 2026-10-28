@@ -1,10 +1,23 @@
 services:
   web:
+    networks:
+      - default
+      - proxy
     build: .
     ports:
-      - "8000:8000"
+      - "8044:8000"
     # API keys come from .env (OPENROUTER_API_KEY / OPENAI_API_KEY). Without one, the deterministic fallback runs.
     env_file:
       - path: .env
         required: false
+    labels:
+      traefik.enable: "true"
+      "traefik.http.routers.${SUBDOMAIN:-example}.rule": "Host(`${SUBDOMAIN:-example}.clovercloud.cc`)"
+      "traefik.http.routers.${SUBDOMAIN:-example}.entrypoints": "websecure"
+      "traefik.http.services.${SUBDOMAIN:-example}.loadbalancer.server.port": "9000"
+
     restart: unless-stopped
+
+networks:
+  proxy:
+    external: true
