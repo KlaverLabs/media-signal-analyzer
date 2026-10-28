@@ -6,16 +6,18 @@ services:
     build: .
     ports:
       - "8044:8044"
-    # API keys come from .env (OPENROUTER_API_KEY / OPENAI_API_KEY). The container exits at startup without one.
-    env_file:
-      - path: .env
-        required: false
+    # Keys are passed through from the stack environment (Portainer) or a local .env.
+    # The container exits at startup if neither OPENROUTER_API_KEY nor OPENAI_API_KEY is set.
+    environment:
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+    # List form: Compose only interpolates variables in label *names* when labels are a list.
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${SUBDOMAIN:-example}.rule=Host(`${SUBDOMAIN:-example}.clovercloud.cc`)"
       - "traefik.http.routers.${SUBDOMAIN:-example}.entrypoints=websecure"
       - "traefik.http.services.${SUBDOMAIN:-example}.loadbalancer.server.port=8044"
-
     restart: unless-stopped
 
 networks:
