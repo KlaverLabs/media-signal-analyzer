@@ -14,7 +14,7 @@ services:
       traefik.enable: "true"
       "traefik.http.routers.${SUBDOMAIN:-example}.rule": "Host(`${SUBDOMAIN:-example}.clovercloud.cc`)"
       "traefik.http.routers.${SUBDOMAIN:-example}.entrypoints": "websecure"
-      "traefik.http.services.${SUBDOMAIN:-example}.loadbalancer.server.port": "9000"
+      "traefik.http.services.${SUBDOMAIN:-example}.loadbalancer.server.port": "8044"
 
     restart: unless-stopped
 
