@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
@@ -11,7 +12,14 @@ from .ingest import fetch_article
 from .models import AnalysisReport, AnalyzeRequest
 
 BASE = Path(__file__).parent
-app = FastAPI(title="Media Manipulation Signal Analyzer & TraceCheck")
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    if detect_provider() is None:  # refuse to start rather than silently serving the non-AI fallback
+        raise RuntimeError("No API key found. Set OPENROUTER_API_KEY or OPENAI_API_KEY (environment or .env) and restart.")
+    yield
+
+
+app = FastAPI(title="Media Manipulation Signal Analyzer & TraceCheck", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
 templates = Jinja2Templates(directory=BASE / "templates")
 

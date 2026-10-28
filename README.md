@@ -13,10 +13,12 @@ It reports signals only: never "PSYOP", never intent, never truth value.
     .venv/bin/pytest
 
 ## Engines
+The server refuses to start (exit code 3) unless `OPENROUTER_API_KEY` or `OPENAI_API_KEY` is set.
+
 | Condition | Engine label in UI |
 |---|---|
 | `OPENROUTER_API_KEY` or `OPENAI_API_KEY` set (env or `.env`) | Engine: Live LLM Extraction |
-| no key, `Force deterministic fallback` ticked, or the LLM call fails | Engine: Demonstration Fallback (Deterministic) |
+| `Force deterministic fallback` ticked, or the LLM call fails | Engine: Demonstration Fallback (Deterministic) |
 
 Optional `LLM_MODEL` overrides the model (default `openai/gpt-4o` on OpenRouter, `gpt-4o` on OpenAI). Claude and Gemini models are available through OpenRouter. A failed LLM call never crashes: it falls back and shows a warning. The fallback is a regex lexicon covering 15 of 20 indicators; the other five are `Cannot assess` by design.
 
@@ -35,5 +37,5 @@ Every `Observed` quote is checked server-side as an exact substring (whitespace-
 5. Export JSON / Markdown / PDF for handouts (print uses a light palette).
 
 ## Docker
-    cp .env.example .env   # add a key, or leave empty for fallback mode
+    cp .env.example .env   # a key is required
     docker compose up --build   # http://localhost:8000
