@@ -5,7 +5,7 @@ services:
       - proxy
     build: .
     ports:
-      - "8044:8000"
+      - "8044:8044"
     # API keys come from .env (OPENROUTER_API_KEY / OPENAI_API_KEY). Without one, the deterministic fallback runs.
     env_file:
       - path: .env
