@@ -31,7 +31,7 @@ def detect_provider() -> Optional[Provider]:
     Claude and Gemini models are reachable through OpenRouter (set LLM_MODEL)."""
     model = os.environ.get("LLM_MODEL") or os.environ.get("OPENROUTER_MODEL")
     if key := os.environ.get("OPENROUTER_API_KEY"):
-        return Provider("openrouter", key, "https://openrouter.ai/api/v1", model or "openai/gpt-4o")
+        return Provider("openrouter", key, "https://openrouter.ai/api/v1", model or "openai/gpt-4o-mini")
     if key := os.environ.get("OPENAI_API_KEY"):
         return Provider("openai", key, None, model or "gpt-4o-mini")
     return None
