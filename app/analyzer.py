@@ -33,7 +33,7 @@ def detect_provider() -> Optional[Provider]:
     if key := os.environ.get("OPENROUTER_API_KEY"):
         return Provider("openrouter", key, "https://openrouter.ai/api/v1", model or "openai/gpt-4o")
     if key := os.environ.get("OPENAI_API_KEY"):
-        return Provider("openai", key, None, model or "gpt-4o")
+        return Provider("openai", key, None, model or "gpt-4o-mini")
     return None
 
 
