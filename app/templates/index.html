@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Media Manipulation Signal Analyzer</title>
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="/static/css/custom.css">
+</head>
+<body>
+<header class="max-w-6xl mx-auto px-4 pt-6">
+  <h1 class="text-2xl sm:text-3xl font-bold">🔎 Media Manipulation Signal Analyzer <span class="muted text-lg font-normal">&amp; TraceCheck</span></h1>
+  <p class="text-sm muted mt-1">{{ disclaimer }}</p>
+  <nav class="tabs mt-4 flex border-b" style="border-color:var(--line)" role="tablist">
+    <button class="tab" role="tab" id="tab-analyzer" aria-selected="true" data-tab="analyzer">Signal Analyzer</button>
+    <button class="tab" role="tab" id="tab-trace" aria-selected="false" data-tab="trace">TraceCheck</button>
+  </nav>
+</header>
+
+<main class="max-w-6xl mx-auto px-4 py-6">
+  <!-- ANALYZER -->
+  <section id="analyzer-panel" role="tabpanel">
+    <form id="form-card" class="card space-y-3">
+      <label class="block text-sm font-medium">Article URL (optional)
+        <input id="url" type="url" placeholder="https://…" class="field mt-1"></label>
+      <label class="block text-sm font-medium">Or paste the source text
+        <textarea id="text" rows="8" maxlength="{{ max_chars }}" class="field mt-1"></textarea></label>
+      <div class="flex flex-wrap items-center gap-3">
+        <button id="go" class="btn btn-primary" type="submit">Analyze</button>
+        <button id="sample" class="btn" type="button">Load sample text</button>
+        <label class="text-sm flex items-center gap-1"><input id="force" type="checkbox"> Force deterministic fallback</label>
+      </div>
+    </form>
+
+    <div id="msg" class="banner mt-4 hidden" role="status"></div>
+
+    <div id="results" class="hidden mt-6">
+      <div class="flex flex-wrap items-center gap-2 mb-3">
+        <span id="engine" class="badge"></span><span id="model" class="muted text-xs"></span>
+        <span id="assessed" class="muted text-xs"></span>
+      </div>
+      <div id="warnings"></div>
+      <div id="insufficient" class="banner banner-warn hidden mb-3"></div>
+
+      <div class="grid lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2 space-y-4">
+          <div class="card text-center" id="gauge-wrap">
+            <h2 class="font-semibold text-left">Signal Intensity Index</h2>
+            <svg id="gauge" viewBox="0 0 340 200" class="w-full max-w-md mx-auto" role="img" aria-label="Signal intensity gauge">
+              <g id="gauge-static"></g>
+              <g id="needle" class="off"><line x1="170" y1="160" x2="170" y2="62" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/></g>
+              <circle cx="170" cy="160" r="9" fill="var(--ink)"/>
+              <text id="gauge-value" x="170" y="190" text-anchor="middle" font-size="18" font-weight="700" fill="var(--ink)">—</text>
+            </svg>
+            <p class="text-sm font-medium"><span id="band"></span></p>
+            <p class="text-xs muted mt-1 italic">{{ gauge_disclaimer }}</p>
+          </div>
+
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div class="card"><h3 class="font-semibold text-sm mb-2">Score by indicator <span class="muted font-normal">(click a bar)</span></h3>
+              <div style="height:460px"><canvas id="bar" aria-label="Indicator scores"></canvas></div></div>
+            <div class="card"><h3 class="font-semibold text-sm mb-2">Distribution</h3>
+              <div style="height:260px"><canvas id="donut" aria-label="Status distribution"></canvas></div></div>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <h2 class="font-semibold">Detailed findings</h2>
+              <div id="filters" class="flex flex-wrap gap-3 text-sm no-print"></div>
+            </div>
+            <div id="cards" class="space-y-2"></div>
+          </div>
+
+          <div id="dl-actions" class="flex flex-wrap gap-2">
+            <button id="dl-json" class="btn">Download JSON Report</button>
+            <button id="copy-md" class="btn">Copy Markdown</button>
+            <button id="print" class="btn">Print / Save PDF</button>
+          </div>
+        </div>
+
+        <aside class="lg:col-span-1"><div class="card sticky-src">
+          <h2 class="font-semibold">Source View</h2>
+          <p id="src-note" class="text-xs muted mb-2">Select a finding to highlight its supporting quote.</p>
+          <div id="source"></div>
+        </div></aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRACECHECK -->
+  <section id="trace-panel" role="tabpanel" class="hidden">
+    <div class="grid md:grid-cols-2 gap-8 items-start">
+      <div>
+        <h2 class="text-xl font-bold">TraceCheck — a pause before you share</h2>
+        <p class="text-sm muted mt-2">Interactive simulator based on the May 2023 viral hoax image of an explosion near the Pentagon. Tap <b>Repost</b> on the mock post to meet the interceptor, then open each stage of the propagation chain and work through its verification questions.</p>
+        <ol class="mt-4 text-sm list-decimal pl-5 space-y-1 muted">
+          <li>Press Repost on the phone.</li><li>Click a stage (Source → Audience) to expand its checklist.</li>
+          <li>Use “Open claim in PSYOPS Forensic Suite” to run the text through the Signal Analyzer.</li></ol>
+      </div>
+      <div class="phone"><div class="screen">
+        <div class="px-4 py-2 text-xs flex justify-between" style="background:#f1f5f9"><b>Feed</b><span>9:41</span></div>
+        <div class="feed" id="feed">
+          <div class="flex items-center gap-2"><div class="node" style="background:#7c3aed">N</div>
+            <div><b>NewsWire Live</b> <span style="color:#2563eb">✔</span><br><span class="muted text-xs">@newswire_live_ · 2m</span></div></div>
+          <p class="mt-2" id="post-text"></p>
+          <div class="post-img">[ image: smoke over buildings — unverified ]</div>
+          <div class="flex justify-between text-xs mt-1">
+            <span>💬 312</span>
+            <span>🔁 <span id="reposts" class="pulse">4,821</span> reposts</span>
+            <span>❤ 9.4K</span></div>
+          <div class="flex gap-2 mt-3"><button class="btn" style="color:#0f172a;background:#fff" id="repost-btn">🔁 Repost</button>
+            <button class="btn" style="color:#0f172a;background:#fff">❤ Like</button></div>
+          <p id="toast" class="text-xs mt-3" style="color:#475569"></p>
+        </div>
+        <div class="interceptor" id="interceptor" role="dialog" aria-label="Trace before you share">
+          <div class="p-3" style="background:#fef3c7"><b>⏸ Pause — trace it before you share</b>
+            <div class="text-xs mt-1"><span id="progress">0</span>/<span id="total">0</span> checks considered</div>
+            <div style="height:6px;background:#fde68a;border-radius:99px;margin-top:4px"><div id="bar-fill" style="height:6px;width:0;background:#d97706;border-radius:99px;transition:width .3s"></div></div></div>
+          <div class="flex-1 overflow-auto p-2 trace-line-wrap" id="accordion"></div>
+          <div class="p-3 space-y-2" style="border-top:1px solid #e2e8f0">
+            <button id="open-suite" class="btn w-full" style="color:#0f172a;background:#fff">Open claim in PSYOPS Forensic Suite</button>
+            <div class="flex gap-2"><button id="hold" class="btn btn-primary flex-1" style="background:#0f172a;color:#fff">Hold &amp; verify</button>
+              <button id="share-anyway" class="btn flex-1" style="color:#0f172a;background:#fff">Share anyway</button></div></div>
+        </div>
+      </div></div>
+    </div>
+  </section>
+</main>
+
+<script>window.BOOT = {{ boot|tojson }};</script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>
