@@ -44,6 +44,9 @@ spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
+      # Portainer-managed GHCR pull secret; grant registry access to this namespace in Portainer to create it here.
+      imagePullSecrets:
+        - name: registry-1
       containers:
         - name: media-analyzer
           image: ghcr.io/klaverlabs/media-signal-analyzer:latest
