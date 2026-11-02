@@ -1,0 +1,111 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: media-analyzer
+---
+# The app exits at startup if neither OPENROUTER_API_KEY nor OPENAI_API_KEY is set.
+# Fill in a key before applying, or manage this Secret out-of-band and drop it from this file:
+#   kubectl -n media-analyzer create secret generic media-analyzer --from-literal=OPENROUTER_API_KEY=...
+apiVersion: v1
+kind: Secret
+metadata:
+  name: media-analyzer
+  namespace: media-analyzer
+type: Opaque
+stringData:
+  OPENROUTER_API_KEY: ""
+  OPENAI_API_KEY: ""
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: media-analyzer
+  namespace: media-analyzer
+data:
+  LLM_MODEL: ""
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: media-analyzer
+  namespace: media-analyzer
+  labels:
+    app: media-analyzer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: media-analyzer
+  template:
+    metadata:
+      labels:
+        app: media-analyzer
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+      containers:
+        - name: media-analyzer
+          image: ghcr.io/klaverlabs/media-signal-analyzer:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8044
+          envFrom:
+            - secretRef:
+                name: media-analyzer
+            - configMapRef:
+                name: media-analyzer
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: media-analyzer
+  namespace: media-analyzer
+spec:
+  selector:
+    app: media-analyzer
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: media-analyzer
+  namespace: media-analyzer
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: media-analyzer.klaverlabs.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: media-analyzer
+                port:
+                  name: http
